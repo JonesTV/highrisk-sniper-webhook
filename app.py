@@ -16,8 +16,11 @@ def helius_listener():
             if token_address:
                 print(f"[+] Token detected: {token_address}")
                 if should_snipe(token_address):
-                    print(f"[✔] Sniping {token_address}")
-                    send_to_nova(token_address)
+    print(f"[✔] Sniping {token_address}")
+    try:
+        send_to_nova(token_address)
+    except Exception as e:
+        print(f"[x] Failed to send to Nova: {e}")
 
         return jsonify({"status": "received"}), 200
     except Exception as e:
