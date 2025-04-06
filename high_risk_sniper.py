@@ -232,9 +232,7 @@ def subscribe_to_new_tokens():
     finally:
         pusher_client.disconnect()
 
-# Run the subscription
-if __name__ == "__main__":
-    # Test the REST API first
-    test_rest_api()
-    # Then try the WebSocket subscription
-    subscribe_to_new_tokens()
+# Basic snipe decision logic placeholder
+def should_snipe(token_address):
+    print(f"[🧠] Evaluating token: {token_address}")
+    return True  # TODO: Replace with real LP, age, risk logic
