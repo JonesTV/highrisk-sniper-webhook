@@ -7,7 +7,7 @@ app = Flask(__name__)
 
 @app.route('/helius_listener', methods=['POST'])
 def helius_listener():
-    data = request.get_json()
+    return jsonify({"status": "Webhook received"})
     transactions = data.get("transactions", [])
 
     for tx in transactions:
