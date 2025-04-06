@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 import os
 from high_risk_sniper import should_snipe  # Make sure this file exists and is Vercel-compatible
-from high_risk_sniper_log_all import send_to_nova  # Make sure this file exists
+from ws_sniper_log_all import send_to_nova  # Make sure this file exists
 
 app = Flask(__name__)
 
