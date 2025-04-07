@@ -12,8 +12,16 @@ app = Flask(__name__)
 @app.route('/helius_listener', methods=['POST'])
 def helius_listener():
     try:
-        data = request.get_json(force=True)  # ← properly indented
-        transactions = data.get("transactions", [])
+        data = request.get_json(force=True)
+
+        # Check if it's a list directly
+        if isinstance(data, list):
+            transactions = data
+        elif isinstance(data, dict):
+            transactions = data.get("transactions", [])
+        else:
+            print("[x] Unexpected data format:", type(data))
+            return jsonify({"error": "Invalid data format"}), 400
 
         for tx in transactions:
             token_address = extract_token_address(tx)
