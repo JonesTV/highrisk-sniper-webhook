@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 import os
 from high_risk_sniper import should_snipe  # Your logic
-from ws_sniper_log_all import send_to_nova  # Nova alert
+from send_to_nova import send_to_nova  # Nova alert
 
 app = Flask(__name__)
 
