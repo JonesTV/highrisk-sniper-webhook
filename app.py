@@ -1,11 +1,6 @@
-try:
-    from flask import Flask, request, jsonify
-    import os
-    from high_risk_sniper import should_snipe
-    from send_to_nova import send_to_nova  # Updated import
-except Exception as e:
-    print("🔥 Startup import crash:", str(e))
-    raise
+from flask import Flask, request, jsonify
+from high_risk_sniper import should_snipe
+from send_to_nova import send_to_nova
 
 app = Flask(__name__)
 
@@ -14,14 +9,14 @@ def helius_listener():
     try:
         data = request.get_json(force=True)
 
-        # Check if it's a list directly
+        # Handle both dict and list formats from Helius
         if isinstance(data, list):
             transactions = data
         elif isinstance(data, dict):
             transactions = data.get("transactions", [])
         else:
-            print("[x] Unexpected data format:", type(data))
-            return jsonify({"error": "Invalid data format"}), 400
+            print("[x] Invalid webhook format:", type(data))
+            return jsonify({"error": "Invalid webhook format"}), 400
 
         for tx in transactions:
             token_address = extract_token_address(tx)
