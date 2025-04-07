@@ -8,18 +8,23 @@ app = Flask(__name__)
 def helius_listener():
     try:
         data = request.get_json(force=True)
-        print(f"📦 Webhook Raw Data Type: {type(data)}")
+        print(f"📦 Webhook Data Type: {type(data)}")
 
-        # Handle both formats: dict with "transactions" or raw list
-        if isinstance(data, list):
+        # Support both list-based and dict-based webhook payloads
+        transactions = []
+        if isinstance(data, dict) and "transactions" in data:
+            transactions = data["transactions"]
+        elif isinstance(data, list):
             transactions = data
-        elif isinstance(data, dict):
-            transactions = data.get("transactions", [])
         else:
-            print(f"[x] Unexpected data type: {type(data)} - {data}")
+            print(f"[x] Unexpected webhook format: {type(data)}")
             return jsonify({"error": "Invalid webhook format"}), 400
 
         for tx in transactions:
+            if not isinstance(tx, dict):
+                print(f"[x] Skipping non-dict tx: {tx}")
+                continue
+
             token_address = extract_token_address(tx)
             if token_address:
                 print(f"[+] Token detected: {token_address}")
@@ -36,13 +41,17 @@ def helius_listener():
         print(f"[x] Error handling webhook: {e}")
         return jsonify({"error": str(e)}), 500
 
+
 def extract_token_address(tx):
     try:
-        for inst in tx.get("events", {}).get("token", []):
-            if inst.get("mint"):
-                return inst["mint"]
+        events = tx.get("events", {})
+        tokens = events.get("token", [])
+        if isinstance(tokens, list):
+            for inst in tokens:
+                if isinstance(inst, dict) and "mint" in inst:
+                    return inst["mint"]
     except Exception as e:
-        print(f"[x] Failed to extract token: {e}")
+        print(f"[x] Failed to extract token address: {e}")
     return None
 
 if __name__ == '__main__':
