@@ -9,13 +9,13 @@ def helius_listener():
     try:
         data = request.get_json(force=True)
 
-        # 🧠 Handle raw list OR dict with "transactions" key
+       print(f"📦 Webhook Raw Data: {type(data)} - {data}")
         if isinstance(data, list):
             transactions = data
-        elif isinstance(data, dict):
-            transactions = data.get("transactions", [])
+        elif isinstance(data, dict) and "transactions" in data:
+            transactions = data["transactions"]
         else:
-            print(f"[x] Unexpected format: {type(data)}\n{data}")
+            print(f"[x] Unknown data structure: {type(data)} — {data}")
             return jsonify({"error": "Invalid webhook format"}), 400
 
         for tx in transactions:
@@ -27,11 +27,12 @@ def helius_listener():
                     try:
                         send_to_nova(token_address)
                     except Exception as e:
-                        print(f"[x] Failed to send to Nova: {e}")
+                        print(f"[x] Nova send error: {e}")
 
         return jsonify({"status": "received"}), 200
+
     except Exception as e:
-        print(f"[x] Error handling webhook: {e}")
+        print(f"[x] Fatal webhook error: {e}")
         return jsonify({"error": str(e)}), 500
 
 def extract_token_address(tx):
