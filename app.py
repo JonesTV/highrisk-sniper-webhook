@@ -1,7 +1,11 @@
-from flask import Flask, request, jsonify
-import os
-from high_risk_sniper import should_snipe  # Your logic
-from send_to_nova import send_to_nova  # Nova alert
+try:
+    from flask import Flask, request, jsonify
+    import os
+    from high_risk_sniper import should_snipe
+    from send_to_nova import send_to_nova  # Updated import
+except Exception as e:
+    print("🔥 Startup import crash:", str(e))
+    raise
 
 app = Flask(__name__)
 
