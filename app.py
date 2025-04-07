@@ -8,14 +8,15 @@ app = Flask(__name__)
 def helius_listener():
     try:
         data = request.get_json(force=True)
+        print(f"📦 Webhook Raw Data Type: {type(data)}")
 
-       print(f"📦 Webhook Raw Data: {type(data)} - {data}")
+        # Handle both formats: dict with "transactions" or raw list
         if isinstance(data, list):
             transactions = data
-        elif isinstance(data, dict) and "transactions" in data:
-            transactions = data["transactions"]
+        elif isinstance(data, dict):
+            transactions = data.get("transactions", [])
         else:
-            print(f"[x] Unknown data structure: {type(data)} — {data}")
+            print(f"[x] Unexpected data type: {type(data)} - {data}")
             return jsonify({"error": "Invalid webhook format"}), 400
 
         for tx in transactions:
@@ -27,21 +28,22 @@ def helius_listener():
                     try:
                         send_to_nova(token_address)
                     except Exception as e:
-                        print(f"[x] Nova send error: {e}")
+                        print(f"[x] Failed to send to Nova: {e}")
 
         return jsonify({"status": "received"}), 200
 
     except Exception as e:
-        print(f"[x] Fatal webhook error: {e}")
+        print(f"[x] Error handling webhook: {e}")
         return jsonify({"error": str(e)}), 500
 
 def extract_token_address(tx):
     try:
-        events = tx.get("events", {})
-        token_events = events.get("token", [])
-        for inst in token_events:
+        for inst in tx.get("events", {}).get("token", []):
             if inst.get("mint"):
                 return inst["mint"]
     except Exception as e:
-        print(f"[x] Token extract failed: {e}")
+        print(f"[x] Failed to extract token: {e}")
     return None
+
+if __name__ == '__main__':
+    app.run(debug=True)
