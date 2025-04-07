@@ -6,57 +6,59 @@ app = Flask(__name__)
 
 @app.route('/helius_listener', methods=['POST'])
 def helius_listener():
+    print("✅ DEPLOYED VERSION: v0.1.9 - THIS IS LIVE")  # <== Confirms redeployment
+
     try:
         data = request.get_json(force=True)
-        print(f"\n📦 Webhook received. Type: {type(data)}")
-        print(f"📨 Full webhook payload:\n{data}\n")
+        print(f"📦 Webhook received. Type: {type(data)}")
+        print(f"📨 Payload:\n{data}\n")
 
-        # Handle list or dict with 'transactions'
+        # Determine structure
         if isinstance(data, dict) and "transactions" in data:
             transactions = data["transactions"]
         elif isinstance(data, list):
             transactions = data
         else:
-            print(f"[x] Unexpected root payload format: {type(data)} — {data}")
+            print(f"[x] Unexpected root payload format: {type(data)}")
             return jsonify({"error": "Invalid webhook format"}), 400
 
         # Flatten nested lists
-        flat_transactions = []
+        flattened = []
         for item in transactions:
             if isinstance(item, list):
-                print("[⚠️] Nested list found, flattening.")
-                flat_transactions.extend(item)
+                print("[⚠️] Nested list detected, flattening.")
+                flattened.extend(item)
             else:
-                flat_transactions.append(item)
+                flattened.append(item)
 
-        transactions = flat_transactions
+        transactions = flattened
 
         if not isinstance(transactions, list):
-            print(f"[x] Transactions is not a list: {transactions}")
+            print(f"[x] Transactions is not a list after flatten: {transactions}")
             return jsonify({"error": "Transactions must be a list"}), 400
 
-        print(f"🔍 Total transactions after flatten: {len(transactions)}")
+        print(f"🔍 Total transactions: {len(transactions)}")
 
         for i, tx in enumerate(transactions):
             print(f"\n--- Transaction {i+1} ---")
-            print(f"🔎 Type of tx: {type(tx)}")
-            print(f"🔎 Transaction data: {tx}")
+            print(f"🔎 Type: {type(tx)}")
+            print(f"📦 Data: {tx}")
 
             if not isinstance(tx, dict):
                 print(f"[x] Skipping non-dict transaction.")
                 continue
 
             token_address = extract_token_address(tx)
-            print(f"🔍 Extracted token address: {token_address}")
+            print(f"🎯 Token Address: {token_address}")
 
             if token_address and should_snipe(token_address):
-                print(f"[✔] Sniping {token_address}")
+                print(f"[🚀] Sniping {token_address}")
                 try:
                     send_to_nova(token_address)
                 except Exception as e:
-                    print(f"[x] Failed to send to Nova: {e}")
+                    print(f"[x] Nova error: {e}")
 
-        return jsonify({"status": "received"}), 200
+        return jsonify({"status": "received", "version": "v0.1.9"}), 200
 
     except Exception as e:
         print(f"[🔥] Webhook handler crashed: {e}")
@@ -65,18 +67,18 @@ def helius_listener():
 
 def extract_token_address(tx):
     if not isinstance(tx, dict):
-        print(f"[x] Non-dict transaction passed to extractor: {tx}")
+        print(f"[x] extract_token_address received non-dict: {tx}")
         return None
 
     try:
         events = tx.get("events", {})
         if not isinstance(events, dict):
-            print(f"[x] Unexpected events format: {events}")
+            print(f"[x] Invalid 'events' format: {events}")
             return None
 
         tokens = events.get("token", [])
         if not isinstance(tokens, list):
-            print(f"[x] Unexpected token format: {tokens}")
+            print(f"[x] Invalid 'token' format: {tokens}")
             return None
 
         for inst in tokens:
