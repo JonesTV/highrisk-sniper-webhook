@@ -9,14 +9,14 @@ def helius_listener():
     try:
         data = request.get_json(force=True)
 
-        # Handle both dict and list formats from Helius
+        # ✅ Handle list or dict formats
         if isinstance(data, list):
             transactions = data
-        elif isinstance(data, dict):
-            transactions = data.get("transactions", [])
+        elif isinstance(data, dict) and "transactions" in data:
+            transactions = data["transactions"]
         else:
-            print("[x] Invalid webhook format:", type(data))
-            return jsonify({"error": "Invalid webhook format"}), 400
+            print(f"[x] Webhook format not supported: {type(data)}\n{data}")
+            return jsonify({"error": "Invalid format"}), 400
 
         for tx in transactions:
             token_address = extract_token_address(tx)
@@ -27,12 +27,12 @@ def helius_listener():
                     try:
                         send_to_nova(token_address)
                     except Exception as e:
-                        print(f"[x] Failed to send to Nova: {e}")
+                        print(f"[x] Nova error: {e}")
 
-        return jsonify({"status": "received"}), 200
+        return jsonify({"status": "processed"}), 200
 
     except Exception as e:
-        print(f"[x] Error handling webhook: {e}")
+        print(f"[x] Webhook crash: {e}")
         return jsonify({"error": str(e)}), 500
 
 
