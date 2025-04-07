@@ -8,15 +8,18 @@ app = Flask(__name__)
 def helius_listener():
     try:
         data = request.get_json(force=True)
+        print(f"\n📨 RAW Payload:\n{data}\n")
         print(f"📦 Received webhook with type: {type(data)}")
 
-        # Support both dict and list formats
+        # Handle both list and dict formats
+        transactions = []
+
         if isinstance(data, dict) and "transactions" in data:
             transactions = data["transactions"]
         elif isinstance(data, list):
             transactions = data
         else:
-            print(f"[x] Unexpected payload type: {type(data)}")
+            print(f"[x] Unexpected payload format: {type(data)} — {data}")
             return jsonify({"error": "Invalid webhook format"}), 400
 
         print(f"🔍 Total transactions received: {len(transactions)}")
