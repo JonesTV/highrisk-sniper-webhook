@@ -8,25 +8,42 @@ app = Flask(__name__)
 def helius_listener():
     try:
         data = request.get_json(force=True)
-        print(f"📦 Webhook received. Type: {type(data)}")
+        print(f"\n📦 Webhook received. Type: {type(data)}")
+        print(f"📨 Full webhook payload:\n{data}\n")
 
-        # Handle both list and dict formats
+        # Handle list or dict with 'transactions'
         if isinstance(data, dict) and "transactions" in data:
             transactions = data["transactions"]
         elif isinstance(data, list):
             transactions = data
         else:
-            print(f"[x] Unexpected payload type: {type(data)} — {data}")
+            print(f"[x] Unexpected root payload format: {type(data)} — {data}")
             return jsonify({"error": "Invalid webhook format"}), 400
 
-        print(f"🔍 Total transactions: {len(transactions)}")
+        # Flatten nested lists
+        flat_transactions = []
+        for item in transactions:
+            if isinstance(item, list):
+                print("[⚠️] Nested list found, flattening.")
+                flat_transactions.extend(item)
+            else:
+                flat_transactions.append(item)
+
+        transactions = flat_transactions
+
+        if not isinstance(transactions, list):
+            print(f"[x] Transactions is not a list: {transactions}")
+            return jsonify({"error": "Transactions must be a list"}), 400
+
+        print(f"🔍 Total transactions after flatten: {len(transactions)}")
 
         for i, tx in enumerate(transactions):
             print(f"\n--- Transaction {i+1} ---")
             print(f"🔎 Type of tx: {type(tx)}")
+            print(f"🔎 Transaction data: {tx}")
 
             if not isinstance(tx, dict):
-                print(f"[x] Skipping non-dict transaction: {tx}")
+                print(f"[x] Skipping non-dict transaction.")
                 continue
 
             token_address = extract_token_address(tx)
@@ -48,7 +65,7 @@ def helius_listener():
 
 def extract_token_address(tx):
     if not isinstance(tx, dict):
-        print(f"[x] Non-dict transaction encountered: {tx}")
+        print(f"[x] Non-dict transaction passed to extractor: {tx}")
         return None
 
     try:
@@ -67,7 +84,7 @@ def extract_token_address(tx):
                 return inst["mint"]
 
     except Exception as e:
-        print(f"[x] Failed to extract token address: {e}")
+        print(f"[x] Exception in extract_token_address: {e}")
 
     return None
 
